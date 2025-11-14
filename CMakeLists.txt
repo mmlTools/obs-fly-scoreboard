@@ -62,11 +62,13 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
-  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    ENABLE_FRONTEND_API=1
-    HAVE_OBS_DOCK_BY_ID=1
-  )
+  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_FRONTEND_API=1)
+
+  if(WIN32 OR APPLE)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE HAVE_OBS_DOCK_BY_ID=1)
+  endif()
 endif()
+
 
 if(ENABLE_QT)
   find_package(Qt6 COMPONENTS Core Widgets QUIET)
