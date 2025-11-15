@@ -19,7 +19,6 @@ project(${_name} VERSION ${_version} LANGUAGES C CXX)
 # Options
 # ---------------------------------------------------------------------------
 option(ENABLE_FRONTEND_API   "Use obs-frontend-api for UI functionality" ON)
-option(ENABLE_QT             "Use Qt functionality (dock UI)"            ON)
 option(ENABLE_HTTP_SERVER    "Serve overlay on http://127.0.0.1:<port>"  ON)
 option(EMBED_DEFAULT_ASSETS  "Embed data/overlay + locale into binary"   ON)
 
@@ -73,33 +72,37 @@ add_library(${CMAKE_PROJECT_NAME} MODULE)
 find_package(libobs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
+# ---------------------------------------------------------------------------
+# Qt (dock + dialogs + hotkeys, now required)
+# ---------------------------------------------------------------------------
+find_package(Qt6 COMPONENTS Core Widgets QUIET)
+if(Qt6_FOUND)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
+else()
+  find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt5::Core Qt5::Widgets)
+endif()
+
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+  AUTOMOC ON
+  AUTOUIC ON
+  AUTORCC ON
+)
+
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_QT=1)
+
+# ---------------------------------------------------------------------------
 # Optional: frontend API
+# ---------------------------------------------------------------------------
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_FRONTEND_API=1)
 endif()
 
-# Optional: Qt (dock + dialogs)
-if(ENABLE_QT)
-  find_package(Qt6 COMPONENTS Core Widgets QUIET)
-  if(Qt6_FOUND)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
-  else()
-    find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt5::Core Qt5::Widgets)
-  endif()
-
-  set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
-    AUTOMOC ON
-    AUTOUIC ON
-    AUTORCC ON
-  )
-
-  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_QT=1)
-endif()
-
+# ---------------------------------------------------------------------------
 # Optional: HTTP server
+# ---------------------------------------------------------------------------
 if(ENABLE_HTTP_SERVER)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_HTTP_SERVER=1)
   if(WIN32)
@@ -133,14 +136,13 @@ if(ENABLE_HTTP_SERVER)
   )
 endif()
 
-if(ENABLE_QT)
-  list(APPEND OBS_FLY_SCORE_SRC
-    ${FS_SRC_DIR}/fly_score_dock.cpp
-    ${FS_INC_DIR}/fly_score_dock.hpp
-    ${FS_SRC_DIR}/fly_score_settings_dialog.cpp
-    ${FS_INC_DIR}/fly_score_settings_dialog.hpp
-  )
-endif()
+# Qt-related sources (dock + settings dialog) are always included now
+list(APPEND OBS_FLY_SCORE_SRC
+  ${FS_SRC_DIR}/fly_score_dock.cpp
+  ${FS_INC_DIR}/fly_score_dock.hpp
+  ${FS_SRC_DIR}/fly_score_settings_dialog.cpp
+  ${FS_INC_DIR}/fly_score_settings_dialog.hpp
+)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${OBS_FLY_SCORE_SRC})
 
@@ -197,9 +199,6 @@ endif()
 # ---------------------------------------------------------------------------
 # Plugin packaging / install (let template helpers handle it)
 # ---------------------------------------------------------------------------
-# IMPORTANT: this replaces the manual install() + PREFIX logic.
-# It lets obs-plugintemplate create the right bundles & artifacts
-# for Windows/macOS/Linux and makes the release workflow happy.
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES
   OUTPUT_NAME ${_name}
 )
