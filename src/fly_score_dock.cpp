@@ -902,29 +902,37 @@ static QWidget *g_dockContent = nullptr;
 
 void fly_create_dock()
 {
-#ifdef ENABLE_FRONTEND_API
 	if (g_dockContent)
 		return;
 
 	auto *panel = new FlyScoreDock(nullptr);
 	panel->init();
 
+#if defined(HAVE_OBS_DOCK_BY_ID)
+	// New OBS API: register dock by ID + title
 	obs_frontend_add_dock_by_id(kFlyDockId, kFlyDockTitle, panel);
-	g_dockContent = panel;
 #else
-	LOGW("fly_create_dock: frontend API not available; dock will not be registered.");
+	// Very old OBS fallback (only if headers still expose QWidget* overload)
+	obs_frontend_add_dock(panel);
 #endif
+
+	g_dockContent = panel;
 }
 
 void fly_destroy_dock()
 {
-#ifdef ENABLE_FRONTEND_API
 	if (!g_dockContent)
 		return;
 
+#if defined(HAVE_OBS_DOCK_BY_ID)
+	// New OBS API: remove dock by ID
+	obs_frontend_remove_dock(kFlyDockId);
+#else
+	// Very old OBS fallback – only compiled if HAVE_OBS_DOCK_BY_ID is not defined
 	obs_frontend_remove_dock(g_dockContent);
-	g_dockContent = nullptr;
 #endif
+
+	g_dockContent = nullptr;
 }
 
 FlyScoreDock *fly_get_dock()
