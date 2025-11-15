@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.28...3.30)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
 
+# ---------------------------------------------------------------------------
+# Project metadata
+# ---------------------------------------------------------------------------
 if(NOT DEFINED _name)
   set(_name "fly-scoreboard")
 endif()
@@ -15,9 +18,9 @@ project(${_name} VERSION ${_version} LANGUAGES C CXX)
 # ---------------------------------------------------------------------------
 # Options
 # ---------------------------------------------------------------------------
+# Only runtime-related toggles; frontend API is always enabled if available.
 option(ENABLE_HTTP_SERVER    "Serve overlay on http://127.0.0.1:<port>"  ON)
 option(EMBED_DEFAULT_ASSETS  "Embed data/overlay + locale into binary"   ON)
-option(ENABLE_FRONTEND_API   "Use obs-frontend-api for UI functionality" ON)
 
 include(compilerconfig)
 include(defaults)
@@ -30,7 +33,7 @@ if(MSVC)
   add_compile_options(/WX- /utf-8)
 endif()
 
-# OBS 32+ removed obs_frontend_add_dock; we always use the new by-id API.
+# OBS 32+ has obs_frontend_add_dock_by_id; we always use by-id dock API.
 add_compile_definitions(HAVE_OBS_DOCK_BY_ID=1)
 
 if(APPLE)
@@ -55,7 +58,7 @@ set(FS_GEN_DIR     "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 file(MAKE_DIRECTORY "${FS_GEN_DIR}")
 
-# config.hpp – simple name/version header
+# config.hpp (PLUGIN_NAME / PLUGIN_VERSION)
 configure_file(
   "${FS_INC_DIR}/config.hpp.in"
   "${FS_INC_DIR}/config.hpp"
@@ -71,7 +74,16 @@ add_library(${CMAKE_PROJECT_NAME} MODULE)
 find_package(libobs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
+# ---------------------------------------------------------------------------
+# Frontend API (REQUIRED: we want docks/hotkeys/browser auto-setup everywhere)
+# ---------------------------------------------------------------------------
+find_package(obs-frontend-api REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_FRONTEND_API=1)
+
+# ---------------------------------------------------------------------------
 # Qt (dock & dialogs)
+# ---------------------------------------------------------------------------
 find_package(Qt6 COMPONENTS Core Widgets QUIET)
 if(Qt6_FOUND)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
@@ -89,27 +101,7 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_QT=1)
 
 # ---------------------------------------------------------------------------
-# Frontend API (dock, hotkeys, events)
-# ---------------------------------------------------------------------------
-if(ENABLE_FRONTEND_API)
-  if(APPLE)
-    # Homebrew / CI dev package usually doesn't ship obs-frontend-api headers
-    message(STATUS "APPLE build: disabling frontend API (no obs-frontend-api dev headers in CI).")
-  else()
-    find_package(obs-frontend-api REQUIRED)
-
-    if(TARGET OBS::obs-frontend-api)
-      message(STATUS "obs-frontend-api found; enabling frontend features (ENABLE_FRONTEND_API=1).")
-      target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
-      target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_FRONTEND_API=1)
-    else()
-      message(FATAL_ERROR "obs-frontend-api found but target OBS::obs-frontend-api is missing.")
-    endif()
-  endif()
-endif()
-
-# ---------------------------------------------------------------------------
-# HTTP server
+# HTTP server (cpp-httplib)
 # ---------------------------------------------------------------------------
 if(ENABLE_HTTP_SERVER)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_HTTP_SERVER=1)
@@ -119,7 +111,7 @@ if(ENABLE_HTTP_SERVER)
 endif()
 
 # ---------------------------------------------------------------------------
-# Includes & Sources
+# Includes
 # ---------------------------------------------------------------------------
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
   ${FS_INC_DIR}
@@ -128,6 +120,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
   ${FS_3P_DIR}
 )
 
+# ---------------------------------------------------------------------------
+# Sources
+# ---------------------------------------------------------------------------
 set(OBS_FLY_SCORE_SRC
   ${FS_SRC_DIR}/fly_score_plugin.cpp
   ${FS_SRC_DIR}/fly_score_hotkeys.cpp
@@ -198,7 +193,7 @@ inline constexpr const char* ${_id} = R\"obsplg(${_contents})obsplg\";\n")
 endif()
 
 # ---------------------------------------------------------------------------
-# Install / bundles via obs-plugintemplate helpers
+# Let obs-plugintemplate handle bundles & install layout
 # ---------------------------------------------------------------------------
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES
   OUTPUT_NAME ${_name}
