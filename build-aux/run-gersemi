@@ -1,13 +1,12 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 
-# Directory where this script lives (i.e. build-aux/)
-SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Directory where this script lives (build-aux)
+SCRIPT_DIR="${0:A:h}"
 
-# Load the shared formatting helpers from .run-format.zsh in the same folder
-# shellcheck source=/dev/null
-. "${SCRIPT_DIR}/.run-format.zsh"
+# Load the shared formatting helpers (zsh script)
+source "${SCRIPT_DIR}/.run-format.zsh"
 
 # Call the gersemi runner defined in .run-format.zsh
-# If your helper uses a different function name, adjust here.
+# If your helper has a different function name, adjust this.
 run_gersemi "$@"
