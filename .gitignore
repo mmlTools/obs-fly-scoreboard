@@ -5,9 +5,7 @@
 !/.github
 !/build-aux
 !/cmake
-!/docs
 !/data
-!/include
 !/src
 !.clang-format
 !.gersemirc
