@@ -6,8 +6,11 @@
 #include "fly_score_hotkeys.hpp"
 
 #include <obs-module.h>
-#include <obs-frontend-api.h>
 #include <obs.h>
+
+#ifdef ENABLE_FRONTEND_API
+#include <obs-frontend-api.h>
+#endif
 
 #include <QMetaObject>
 #include <QCoreApplication>
@@ -52,6 +55,7 @@ static constexpr const char *kToggleShowKey = "toggle_show";
 
 static obs_data_t *g_deferred = nullptr;
 
+// All the callbacks can stay unchanged – they only touch the dock / obs hotkeys.
 static void cb_home_score_inc(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -62,6 +66,7 @@ static void cb_home_score_inc(void *, obs_hotkey_id id, obs_hotkey_t *, bool pre
 			d->bumpHomeScore(+1);
 	});
 }
+
 static void cb_home_score_dec(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -72,6 +77,7 @@ static void cb_home_score_dec(void *, obs_hotkey_id id, obs_hotkey_t *, bool pre
 			d->bumpHomeScore(-1);
 	});
 }
+
 static void cb_away_score_inc(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -82,6 +88,7 @@ static void cb_away_score_inc(void *, obs_hotkey_id id, obs_hotkey_t *, bool pre
 			d->bumpAwayScore(+1);
 	});
 }
+
 static void cb_away_score_dec(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -92,6 +99,7 @@ static void cb_away_score_dec(void *, obs_hotkey_id id, obs_hotkey_t *, bool pre
 			d->bumpAwayScore(-1);
 	});
 }
+
 static void cb_home_rounds_inc(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -102,6 +110,7 @@ static void cb_home_rounds_inc(void *, obs_hotkey_id id, obs_hotkey_t *, bool pr
 			d->bumpHomeRounds(+1);
 	});
 }
+
 static void cb_home_rounds_dec(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -112,6 +121,7 @@ static void cb_home_rounds_dec(void *, obs_hotkey_id id, obs_hotkey_t *, bool pr
 			d->bumpHomeRounds(-1);
 	});
 }
+
 static void cb_away_rounds_inc(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -122,6 +132,7 @@ static void cb_away_rounds_inc(void *, obs_hotkey_id id, obs_hotkey_t *, bool pr
 			d->bumpAwayRounds(+1);
 	});
 }
+
 static void cb_away_rounds_dec(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -132,6 +143,7 @@ static void cb_away_rounds_dec(void *, obs_hotkey_id id, obs_hotkey_t *, bool pr
 			d->bumpAwayRounds(-1);
 	});
 }
+
 static void cb_toggle_swap(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -142,6 +154,7 @@ static void cb_toggle_swap(void *, obs_hotkey_id id, obs_hotkey_t *, bool presse
 			d->toggleSwap();
 	});
 }
+
 static void cb_toggle_show(void *, obs_hotkey_id id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
@@ -155,6 +168,7 @@ static void cb_toggle_show(void *, obs_hotkey_id id, obs_hotkey_t *, bool presse
 
 static void register_ids_once()
 {
+#ifdef ENABLE_FRONTEND_API
 	if (hk_home_score_inc != OBS_INVALID_HOTKEY_ID)
 		return;
 
@@ -184,6 +198,9 @@ static void register_ids_once()
 						      cb_toggle_show, nullptr);
 
 	LOGI("Registered frontend hotkeys (IDs created).");
+#else
+	LOGI("Frontend API not available; skipping hotkey registration.");
+#endif
 }
 
 static void save_all(obs_data_t *root)
@@ -191,6 +208,7 @@ static void save_all(obs_data_t *root)
 	if (!root)
 		return;
 
+#ifdef ENABLE_FRONTEND_API
 	obs_data_t *out = obs_data_create();
 
 	auto put = [&](const char *key, obs_hotkey_id id) {
@@ -218,12 +236,17 @@ static void save_all(obs_data_t *root)
 	obs_data_release(out);
 
 	LOGI("Hotkey bindings saved to profile.");
+#else
+	UNUSED_PARAMETER(root);
+#endif
 }
 
 static obs_data_t *deep_copy_bindings_obj(obs_data_t *in)
 {
 	if (!in)
 		return nullptr;
+
+#ifdef ENABLE_FRONTEND_API
 	obs_data_t *copy = obs_data_create();
 
 	auto copy_array = [&](const char *key) {
@@ -254,6 +277,10 @@ static obs_data_t *deep_copy_bindings_obj(obs_data_t *in)
 	copy_array(kToggleShowKey);
 
 	return copy;
+#else
+	UNUSED_PARAMETER(in);
+	return nullptr;
+#endif
 }
 
 static void capture_for_deferred_restore(obs_data_t *root)
@@ -261,6 +288,7 @@ static void capture_for_deferred_restore(obs_data_t *root)
 	if (!root)
 		return;
 
+#ifdef ENABLE_FRONTEND_API
 	if (g_deferred) {
 		obs_data_release(g_deferred);
 		g_deferred = nullptr;
@@ -275,8 +303,12 @@ static void capture_for_deferred_restore(obs_data_t *root)
 
 	if (g_deferred)
 		LOGI("Captured hotkey bindings for deferred restore.");
+#else
+	UNUSED_PARAMETER(root);
+#endif
 }
 
+#ifdef ENABLE_FRONTEND_API
 static void frontend_save_cb(obs_data_t *save_data, bool saving, void *)
 {
 	if (saving) {
@@ -285,15 +317,21 @@ static void frontend_save_cb(obs_data_t *save_data, bool saving, void *)
 		capture_for_deferred_restore(save_data);
 	}
 }
+#endif
 
 void fly_hotkeys_init()
 {
+#ifdef ENABLE_FRONTEND_API
 	register_ids_once();
 	obs_frontend_add_save_callback(frontend_save_cb, nullptr);
+#else
+	LOGI("fly_hotkeys_init: frontend API not available; hotkeys disabled.");
+#endif
 }
 
 void fly_hotkeys_apply_deferred_restore()
 {
+#ifdef ENABLE_FRONTEND_API
 	if (!g_deferred)
 		return;
 
@@ -322,10 +360,14 @@ void fly_hotkeys_apply_deferred_restore()
 	g_deferred = nullptr;
 
 	LOGI("Deferred hotkey bindings applied.");
+#else
+	LOGI("fly_hotkeys_apply_deferred_restore: frontend API not available; nothing to do.");
+#endif
 }
 
 void fly_hotkeys_shutdown()
 {
+#ifdef ENABLE_FRONTEND_API
 	if (g_deferred) {
 		obs_data_release(g_deferred);
 		g_deferred = nullptr;
@@ -361,4 +403,7 @@ void fly_hotkeys_shutdown()
 	hk_toggle_swap = hk_toggle_show = OBS_INVALID_HOTKEY_ID;
 
 	LOGI("Hotkey system shut down.");
+#else
+	LOGI("fly_hotkeys_shutdown: frontend API not available; nothing to clean up.");
+#endif
 }

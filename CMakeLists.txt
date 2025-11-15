@@ -12,7 +12,7 @@ endif()
 
 project(${_name} VERSION ${_version} LANGUAGES C CXX)
 
-option(ENABLE_FRONTEND_API   "Use obs-frontend-api for UI functionality" ON)
+# Only runtime options now
 option(ENABLE_HTTP_SERVER    "Serve overlay on http://127.0.0.1:<port>"  ON)
 option(EMBED_DEFAULT_ASSETS  "Embed data/overlay + locale into binary"   ON)
 
@@ -27,9 +27,8 @@ if(MSVC)
   add_compile_options(/WX- /utf-8)
 endif()
 
-if(WIN32 OR APPLE)
-  add_compile_definitions(HAVE_OBS_DOCK_BY_ID=1)
-endif()
+# OBS 32+ removed obs_frontend_add_dock; we always use the new by-id API.
+add_compile_definitions(HAVE_OBS_DOCK_BY_ID=1)
 
 if(APPLE)
   add_compile_options(
@@ -58,9 +57,11 @@ configure_file(
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
+# libobs
 find_package(libobs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
+# Qt (dock & dialogs)
 find_package(Qt6 COMPONENTS Core Widgets QUIET)
 if(Qt6_FOUND)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
@@ -77,12 +78,18 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_QT=1)
 
-if(ENABLE_FRONTEND_API)
-  find_package(obs-frontend-api REQUIRED)
+# ---------------------------------------------------------------------------
+# Frontend API (optional; only if OBS::obs-frontend-api is available)
+# ---------------------------------------------------------------------------
+if(TARGET OBS::obs-frontend-api)
+  message(STATUS "OBS::obs-frontend-api found; enabling frontend features")
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_FRONTEND_API=1)
+else()
+  message(WARNING "OBS::obs-frontend-api not found; building WITHOUT frontend API (no dock/hotkey persistence/browser auto-setup).")
 endif()
 
+# HTTP server
 if(ENABLE_HTTP_SERVER)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_HTTP_SERVER=1)
   if(WIN32)
@@ -129,6 +136,9 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
   CXX_STANDARD_REQUIRED YES
 )
 
+# ---------------------------------------------------------------------------
+# Embedded overlay/locale assets
+# ---------------------------------------------------------------------------
 if(EMBED_DEFAULT_ASSETS)
   set(EMBED_TEXT_FILES
     "${FS_OVERLAY_DIR}/index.html"
@@ -163,6 +173,7 @@ inline constexpr const char* ${_id} = R\"obsplg(${_contents})obsplg\";\n")
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_EMBEDDED_DEFAULTS=1)
 endif()
 
+# Let the obs-plugintemplate helpers handle bundles & install layout
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES
   OUTPUT_NAME ${_name}
 )

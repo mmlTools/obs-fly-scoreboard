@@ -5,7 +5,10 @@
 
 #include <obs-module.h>
 #include <obs.h>
+
+#ifdef ENABLE_FRONTEND_API
 #include <obs-frontend-api.h>
+#endif
 
 #include <cstring>
 #include <QString>
@@ -19,6 +22,7 @@
 
 static obs_scene_t *get_current_scene()
 {
+#ifdef ENABLE_FRONTEND_API
 	obs_source_t *cur = obs_frontend_get_current_scene();
 	if (!cur)
 		return nullptr;
@@ -26,6 +30,9 @@ static obs_scene_t *get_current_scene()
 	obs_scene_t *scn = obs_scene_from_source(cur);
 	obs_source_release(cur);
 	return scn;
+#else
+	return nullptr;
+#endif
 }
 
 static void create_or_update_browser_source(const char *url)
@@ -99,9 +106,14 @@ static void create_or_update_browser_source(const char *url)
 
 static void ensure_browser_for_current_scene_url(const char *url)
 {
+#ifdef ENABLE_FRONTEND_API
 	create_or_update_browser_source(url);
+#else
+	UNUSED_PARAMETER(url);
+#endif
 }
 
+#ifdef ENABLE_FRONTEND_API
 static void frontend_event_cb(enum obs_frontend_event event, void *)
 {
 	switch (event) {
@@ -133,6 +145,7 @@ static void frontend_event_cb(enum obs_frontend_event event, void *)
 		break;
 	}
 }
+#endif
 
 // ---------------------------------------------------------------------------
 // OBS module entry
@@ -166,7 +179,11 @@ bool obs_module_load(void)
 	fly_hotkeys_init();
 	fly_create_dock();
 
+#ifdef ENABLE_FRONTEND_API
 	obs_frontend_add_event_callback(frontend_event_cb, nullptr);
+#else
+	LOGW("Frontend API not available; browser auto-setup and event callbacks disabled.");
+#endif
 
 	return true;
 }
@@ -174,7 +191,11 @@ bool obs_module_load(void)
 void obs_module_unload(void)
 {
 	LOGI("Plugin unloading...");
+
+#ifdef ENABLE_FRONTEND_API
 	obs_frontend_remove_event_callback(frontend_event_cb, nullptr);
+#endif
+
 	fly_hotkeys_shutdown();
 	fly_destroy_dock();
 	fly_server_stop();
