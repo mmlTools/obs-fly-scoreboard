@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.28...3.30)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
 
-# ---------------------------------------------------------------------------
-# Fallbacks if not provided by buildspec/bootstrap
-# ---------------------------------------------------------------------------
 if(NOT DEFINED _name)
   set(_name "fly-scoreboard")
 endif()
@@ -15,9 +12,6 @@ endif()
 
 project(${_name} VERSION ${_version} LANGUAGES C CXX)
 
-# ---------------------------------------------------------------------------
-# Options
-# ---------------------------------------------------------------------------
 option(ENABLE_FRONTEND_API   "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_HTTP_SERVER    "Serve overlay on http://127.0.0.1:<port>"  ON)
 option(EMBED_DEFAULT_ASSETS  "Embed data/overlay + locale into binary"   ON)
@@ -26,14 +20,10 @@ include(compilerconfig)
 include(defaults)
 include(helpers)
 
-# ---------------------------------------------------------------------------
-# Global compile flags / behavior
-# ---------------------------------------------------------------------------
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)
 
 if(MSVC)
-  # Don't treat warnings as errors for this plugin, force UTF-8
   add_compile_options(/WX- /utf-8)
 endif()
 
@@ -50,9 +40,6 @@ if(APPLE)
   )
 endif()
 
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
 set(FS_INC_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 set(FS_3P_DIR      "${CMAKE_CURRENT_SOURCE_DIR}/src/thirdparty")
 set(FS_SRC_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -63,27 +50,17 @@ set(FS_GEN_DIR     "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 file(MAKE_DIRECTORY "${FS_GEN_DIR}")
 
-# ---------------------------------------------------------------------------
-# Generated headers (config.hpp)
-# ---------------------------------------------------------------------------
 configure_file(
   "${FS_INC_DIR}/config.hpp.in"
   "${FS_INC_DIR}/config.hpp"
   @ONLY
 )
 
-# ---------------------------------------------------------------------------
-# Target
-# ---------------------------------------------------------------------------
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
-# libobs
 find_package(libobs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
-# ---------------------------------------------------------------------------
-# Qt (dock + dialogs + hotkeys, now required)
-# ---------------------------------------------------------------------------
 find_package(Qt6 COMPONENTS Core Widgets QUIET)
 if(Qt6_FOUND)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
@@ -100,18 +77,12 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_QT=1)
 
-# ---------------------------------------------------------------------------
-# Optional: frontend API
-# ---------------------------------------------------------------------------
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_FRONTEND_API=1)
 endif()
 
-# ---------------------------------------------------------------------------
-# Optional: HTTP server
-# ---------------------------------------------------------------------------
 if(ENABLE_HTTP_SERVER)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_HTTP_SERVER=1)
   if(WIN32)
@@ -119,9 +90,6 @@ if(ENABLE_HTTP_SERVER)
   endif()
 endif()
 
-# ---------------------------------------------------------------------------
-# Includes
-# ---------------------------------------------------------------------------
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
   ${FS_INC_DIR}
   ${FS_SRC_DIR}
@@ -129,9 +97,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
   ${FS_3P_DIR}
 )
 
-# ---------------------------------------------------------------------------
-# Sources
-# ---------------------------------------------------------------------------
 set(OBS_FLY_SCORE_SRC
   ${FS_SRC_DIR}/fly_score_plugin.cpp
   ${FS_SRC_DIR}/fly_score_hotkeys.cpp
@@ -145,7 +110,6 @@ if(ENABLE_HTTP_SERVER)
   )
 endif()
 
-# Qt-related sources (dock + settings dialog) are always included now
 list(APPEND OBS_FLY_SCORE_SRC
   ${FS_SRC_DIR}/fly_score_dock.cpp
   ${FS_INC_DIR}/fly_score_dock.hpp
@@ -155,9 +119,6 @@ list(APPEND OBS_FLY_SCORE_SRC
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${OBS_FLY_SCORE_SRC})
 
-# ---------------------------------------------------------------------------
-# Macros used in code
-# ---------------------------------------------------------------------------
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
   PLUGIN_NAME_STR="${_name}"
   PLUGIN_VERSION_STR="${_version}"
@@ -168,9 +129,6 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
   CXX_STANDARD_REQUIRED YES
 )
 
-# ---------------------------------------------------------------------------
-# Embedded assets (overlay + locale)
-# ---------------------------------------------------------------------------
 if(EMBED_DEFAULT_ASSETS)
   set(EMBED_TEXT_FILES
     "${FS_OVERLAY_DIR}/index.html"
@@ -205,9 +163,6 @@ inline constexpr const char* ${_id} = R\"obsplg(${_contents})obsplg\";\n")
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_EMBEDDED_DEFAULTS=1)
 endif()
 
-# ---------------------------------------------------------------------------
-# Plugin packaging / install (let template helpers handle it)
-# ---------------------------------------------------------------------------
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES
   OUTPUT_NAME ${_name}
 )
