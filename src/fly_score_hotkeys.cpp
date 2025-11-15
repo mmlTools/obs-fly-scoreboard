@@ -1,4 +1,6 @@
-#define LOG_TAG "[fly-scoreboard][hotkeys]"
+#include "config.hpp"
+
+#define LOG_TAG "[" PLUGIN_NAME "][hotkeys]"
 #include "fly_score_log.hpp"
 
 #include "fly_score_hotkeys.hpp"

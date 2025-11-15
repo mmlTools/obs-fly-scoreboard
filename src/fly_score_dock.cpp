@@ -1,4 +1,6 @@
-#define LOG_TAG "[fly-scoreboard][dock]"
+#include "config.hpp"
+
+#define LOG_TAG "[" PLUGIN_NAME "][dock]"
 #include "fly_score_log.hpp"
 
 #include "fly_score_dock.hpp"
