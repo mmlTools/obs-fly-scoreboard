@@ -67,8 +67,8 @@ file(MAKE_DIRECTORY "${FS_GEN_DIR}")
 # Generated headers (config.hpp)
 # ---------------------------------------------------------------------------
 configure_file(
-  "${FS_SRC_DIR}/config.hpp.in"
-  "${FS_GEN_DIR}/config.hpp"
+  "${FS_INC_DIR}/config.hpp.in"
+  "${FS_INC_DIR}/config.hpp"
   @ONLY
 )
 
@@ -125,7 +125,7 @@ endif()
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
   ${FS_INC_DIR}
   ${FS_SRC_DIR}
-  ${FS_GEN_DIR}   # contains generated config.hpp
+  ${FS_GEN_DIR}
   ${FS_3P_DIR}
 )
 
