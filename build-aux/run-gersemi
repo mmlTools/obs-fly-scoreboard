@@ -1,12 +1,1 @@
-#!/usr/bin/env zsh
-set -euo pipefail
-
-# Directory where this script lives (build-aux)
-SCRIPT_DIR="${0:A:h}"
-
-# Load the shared formatting helpers (zsh script)
-source "${SCRIPT_DIR}/.run-format.zsh"
-
-# Call the gersemi runner defined in .run-format.zsh
-# If your helper has a different function name, adjust this.
-run_gersemi "$@"
+.run-format.zsh
