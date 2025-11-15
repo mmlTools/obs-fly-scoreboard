@@ -1,4 +1,0 @@
-# Always use LF for CI / shell scripts
-build-aux/run-* text eol=lf
-.github/scripts/* text eol=lf
-*.zsh text eol=lf
