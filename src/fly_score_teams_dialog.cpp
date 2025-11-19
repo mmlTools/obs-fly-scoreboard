@@ -28,7 +28,7 @@ FlyTeamsDialog::FlyTeamsDialog(const QString &dataDir,
     , dataDir_(dataDir)
     , state_(state)
 {
-    setWindowTitle(QStringLiteral("Fly Score – Teams"));
+    setWindowTitle(QStringLiteral("Fly Score Teams"));
     setModal(false);
 
     setMinimumWidth(450);
@@ -188,7 +188,7 @@ void FlyTeamsDialog::onBrowseHomeLogo()
     const QString rel = fly_copy_logo_to_overlay(dataDir_, p, QStringLiteral("home"));
     if (rel.isEmpty()) {
         QMessageBox::warning(this,
-                             QStringLiteral("Fly Score – Teams"),
+                             QStringLiteral("Fly Score Teams"),
                              QStringLiteral("Failed to copy logo to overlay folder."));
         return;
     }
@@ -216,7 +216,7 @@ void FlyTeamsDialog::onBrowseAwayLogo()
     const QString rel = fly_copy_logo_to_overlay(dataDir_, p, QStringLiteral("guest"));
     if (rel.isEmpty()) {
         QMessageBox::warning(this,
-                             QStringLiteral("Fly Score – Teams"),
+                             QStringLiteral("Fly Score Teams"),
                              QStringLiteral("Failed to copy logo to overlay folder."));
         return;
     }

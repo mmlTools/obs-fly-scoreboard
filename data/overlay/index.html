@@ -10,27 +10,79 @@
   <body>
     <div id="scoreboard" class="fs-board">
       <div class="fs-side fs-home">
-        <div class="fs-logo"><img id="homeLogo" alt="" /></div>
-        <div class="fs-team">
-          <div id="homeTitle" class="fs-title">Home</div>
-          <div id="homeSub" class="fs-subtitle"></div>
+        <div class="fs-logo">
+          <img alt="" src="{{home.logo}}" />
         </div>
-        <div id="homeScore" class="fs-score">0</div>
+        <div class="fs-team">
+          <div id="homeTitle" class="fs-title">{{home.title}}</div>
+          <div id="homeSub" class="fs-subtitle">{{home.subtitle}}</div>
+        </div>
+        <div id="homeScore" class="fs-score">{{home.score}}</div>
       </div>
 
       <div class="fs-center">
-        <div id="time_label" class="fs-time_label">First Half</div>
-        <div id="timer" class="fs-timer">10:00</div>
-        <div id="aggScore" class="fs-agg">0 : 0</div>
+        <div id="time_label" class="fs-time_label">
+          {{timers[0].label}}
+        </div>
+        <div id="timer" class="fs-timer">
+          {{timers[0].mmss}}
+        </div>
+
+        <div id="aggScore" class="fs-agg {{show_rounds ? 'fs-show' : 'fs-hide'}}">
+          {{home.rounds}} : {{away.rounds}}
+        </div>
       </div>
 
       <div class="fs-side fs-away">
-        <div id="awayScore" class="fs-score">0</div>
+        <div id="awayScore" class="fs-score">{{away.score}}</div>
         <div class="fs-team">
-          <div id="awayTitle" class="fs-title text-right">Guests</div>
-          <div id="awaySub" class="fs-subtitle text-right"></div>
+          <div id="awayTitle" class="fs-title text-right">{{away.title}}</div>
+          <div id="awaySub" class="fs-subtitle text-right">
+            {{away.subtitle}}
+          </div>
         </div>
-        <div class="fs-logo"><img id="awayLogo" alt="" /></div>
+        <div class="fs-logo">
+          <img id="awayLogo" alt="" src="{{away.logo}}" />
+        </div>
+      </div>
+    </div>
+
+    <div class="fs-custom">
+      <div class="fs-custom-row">
+        <span class="fs-custom-label">{{custom_fields[0].label}}</span>
+        <span class="fs-custom-home">{{custom_fields[0].home}}</span>
+        <span class="fs-custom-away">{{custom_fields[0].away}}</span>
+      </div>
+      <div class="fs-custom-row">
+        <span class="fs-custom-label">{{custom_fields[1].label}}</span>
+        <span class="fs-custom-home">{{custom_fields[1].home}}</span>
+        <span class="fs-custom-away">{{custom_fields[1].away}}</span>
+      </div>
+      <div class="fs-custom-row">
+        <span class="fs-custom-label">{{custom_fields[2].label}}</span>
+        <span class="fs-custom-home">{{custom_fields[2].home}}</span>
+        <span class="fs-custom-away">{{custom_fields[2].away}}</span>
+      </div>
+    </div>
+
+    <div class="fs-custom">
+      <div class="fs-custom-row">
+        <span class="fs-custom-label">{{custom_fields[0].label}}</span>
+        <span class="fs-custom-home">{{custom_fields[0].home}}</span>
+        <span class="fs-custom-away">{{custom_fields[0].away}}</span>
+      </div>
+      <div class="fs-custom-row">
+        <span class="fs-custom-label">{{custom_fields[1].label}}</span>
+        <span class="fs-custom-home">{{custom_fields[1].home}}</span>
+        <span class="fs-custom-away">{{custom_fields[1].away}}</span>
+      </div>
+      <div class="fs-custom-row">
+        <span class="fs-custom-label">{{timers[1].label}}</span>
+        <span class="fs-custom-home">{{timers[1].mmss}}</span>
+      </div>
+      <div class="fs-custom-row">
+        <span class="fs-custom-label">{{timers[2].label}}</span>
+        <span class="fs-custom-home">{{timers[2].mmss}}</span>
       </div>
     </div>
 

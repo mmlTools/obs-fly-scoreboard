@@ -35,7 +35,7 @@ static void styleDot(QLabel *dot, bool ok)
 FlySettingsDialog::FlySettingsDialog(QWidget *parent)
 	: QDialog(parent)
 {
-	setWindowTitle(QStringLiteral("Fly Score – Settings"));
+	setWindowTitle(QStringLiteral("Fly Score Settings"));
 	setModal(false);
 
 	auto v = new QVBoxLayout(this);
@@ -202,7 +202,7 @@ void FlySettingsDialog::onOpenOverlay()
 void FlySettingsDialog::onOpenHotkeysHelp()
 {
 	QMessageBox::information(
-		this, tr("Fly Score – Hotkeys"),
+		this, tr("Fly Score Hotkeys"),
 		tr("Bind keys in <b>OBS → Settings → Hotkeys</b>.\n\n"
 		   "Search for actions that start with <i>\"Fly Scoreboard:\"</i>:\n"
 		   " • Home/Guests Score ±1\n"

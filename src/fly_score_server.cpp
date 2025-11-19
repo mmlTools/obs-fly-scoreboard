@@ -26,9 +26,15 @@ static std::string g_doc_root;
 
 static void register_routes(httplib::Server &srv)
 {
-    srv.set_logger([](const httplib::Request &req, const httplib::Response &res) {
-        LOGI("%s %s -> %d", req.method.c_str(), req.path.c_str(), res.status);
-    });
+    // Disable to prevent logging overflow, uncomment only for development
+    // srv.set_logger([](const httplib::Request &req, const httplib::Response &res) {
+    //     LOGI("%s %s -> %d", req.method.c_str(), req.path.c_str(), res.status);
+    // });
+    //
+    // For development comment the line below if you uncomment the block above
+
+    srv.set_logger(nullptr);
+    
     srv.set_error_handler([](const httplib::Request &req, httplib::Response &res) {
         LOGW("ERROR %d for %s %s", res.status, req.method.c_str(), req.path.c_str());
     });
@@ -59,7 +65,6 @@ int fly_server_start(const QString &base_dir_q, int preferred_port)
     if (g_srv)
         return g_port.load();
 
-    // base_dir_q is now the *user-configured doc root*
     g_doc_root = QFileInfo(base_dir_q).absoluteFilePath().toStdString();
     LOGI("server docRoot: %s", g_doc_root.c_str());
 

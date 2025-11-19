@@ -2,6 +2,7 @@
 #include <QWidget>
 #include <QString>
 #include <QVector>
+#include <QKeySequence>
 
 #include "fly_score_state.hpp"
 
@@ -11,15 +12,31 @@ class QLineEdit;
 class QComboBox;
 class QCheckBox;
 class QVBoxLayout;
+class QLabel;
+class QShortcut;
 
 struct FlyCustomFieldUi {
-    QWidget    *row          = nullptr;
-    QLineEdit  *labelEdit    = nullptr;
-    QSpinBox   *homeSpin     = nullptr;
-    QSpinBox   *awaySpin     = nullptr;
-    QCheckBox  *visibleCheck = nullptr;
-    QPushButton *removeBtn   = nullptr;
+    QWidget     *row         = nullptr;
+    QCheckBox   *visibleCheck = nullptr;
+    QLabel      *labelLbl    = nullptr;
+    QSpinBox    *homeSpin    = nullptr;
+    QSpinBox    *awaySpin    = nullptr;
+    QPushButton *minusHome   = nullptr;
+    QPushButton *plusHome    = nullptr;
+    QPushButton *minusAway   = nullptr;
+    QPushButton *plusAway    = nullptr;
 };
+
+struct FlyTimerUi {
+    QWidget     *row       = nullptr;
+    QLabel      *labelLbl  = nullptr;
+    QLineEdit   *timeEdit  = nullptr;
+    QPushButton *startStop = nullptr;
+    QPushButton *reset     = nullptr;
+};
+
+// Forward-declared; defined in fly_score_hotkeys_dialog.hpp
+struct FlyHotkeyBinding;
 
 class FlyScoreDock : public QWidget {
     Q_OBJECT
@@ -31,6 +48,7 @@ signals:
     void requestSave();
 
 public slots:
+    // Existing bump/toggle API used by UI and hotkeys
     void bumpHomeScore(int delta);
     void bumpAwayScore(int delta);
     void bumpHomeRounds(int delta);
@@ -38,17 +56,15 @@ public slots:
     void toggleSwap();
     void toggleShow();
 
+    // Opens the custom hotkeys dialog
+    void openHotkeysDialog();
+
 private slots:
-    void onStartStop();
-    void onReset();
-    void onTimeEdited();
     void onApply();
     void onClearTeamsAndReset();
 
-    // Custom fields
-    void onAddCustomField();
-
-    // Teams dialog
+    void onOpenCustomFieldsDialog();
+    void onOpenTimersDialog();
     void onOpenTeamsDialog();
 
 private:
@@ -56,26 +72,25 @@ private:
     void saveState();
     void refreshUiFromState(bool onlyTimeIfRunning = false);
 
-    // Custom fields helpers (wired to FlyState)
-    void loadCustomFieldsFromState();
-    void saveCustomFieldsToState();
-    FlyCustomFieldUi addCustomFieldRow(const QString &label,
-                                       int home,
-                                       int away,
-                                       bool visible);
+    // Custom fields quick controls
     void clearAllCustomFieldRows();
+    void loadCustomFieldControlsFromState();
+    void syncCustomFieldControlsToState();
+
+    // Timers quick controls
+    void clearAllTimerRows();
+    void loadTimerControlsFromState();
+
+    // Hotkeys (custom dialog-driven, plugin-local)
+    QVector<FlyHotkeyBinding> buildDefaultHotkeyBindings() const;
+    void applyHotkeyBindings(const QVector<FlyHotkeyBinding> &bindings);
+    void clearAllShortcuts();
 
 private:
     QString  dataDir_;
     FlyState st_;
 
-    QLineEdit  *time_label_ = nullptr;
-    QComboBox  *mode_       = nullptr;
-
-    QLineEdit  *time_       = nullptr;
-    QPushButton *startStop_ = nullptr;
-    QPushButton *reset_     = nullptr;
-
+    // Scoreboard main controls
     QSpinBox *homeScore_  = nullptr;
     QSpinBox *awayScore_  = nullptr;
     QSpinBox *homeRounds_ = nullptr;
@@ -88,10 +103,19 @@ private:
     QPushButton *applyBtn_ = nullptr;
     QPushButton *teamsBtn_ = nullptr;
 
-    // Custom stats fields (inside the dock)
+    // Custom fields quick area
     QVBoxLayout *customFieldsLayout_ = nullptr;
-    QPushButton *addFieldBtn_        = nullptr;
+    QPushButton *editFieldsBtn_      = nullptr;
     QVector<FlyCustomFieldUi> customFields_;
+
+    // Timers quick area
+    QVBoxLayout *timersLayout_  = nullptr;
+    QPushButton *editTimersBtn_ = nullptr;
+    QVector<FlyTimerUi> timers_;
+
+    // Hotkey bindings + actual shortcuts
+    QVector<FlyHotkeyBinding> hotkeyBindings_;
+    QVector<QShortcut *>      shortcuts_;
 };
 
 void fly_create_dock();

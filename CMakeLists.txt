@@ -137,7 +137,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # ---------------------------------------------------------------------------
 set(OBS_FLY_SCORE_SRC
   ${FS_SRC_DIR}/fly_score_plugin.cpp
-  ${FS_SRC_DIR}/fly_score_hotkeys.cpp
   ${FS_SRC_DIR}/fly_score_state.cpp
   ${FS_SRC_DIR}/fly_score_qt_helpers.cpp
   ${FS_SRC_DIR}/fly_score_obs_helpers.cpp
@@ -159,6 +158,12 @@ list(APPEND OBS_FLY_SCORE_SRC
   ${FS_INC_DIR}/fly_score_settings_dialog.hpp
   ${FS_SRC_DIR}/fly_score_teams_dialog.cpp
   ${FS_INC_DIR}/fly_score_teams_dialog.hpp
+  ${FS_SRC_DIR}/fly_score_fields_dialog.cpp
+  ${FS_INC_DIR}/fly_score_fields_dialog.hpp
+  ${FS_SRC_DIR}/fly_score_timers_dialog.cpp
+  ${FS_INC_DIR}/fly_score_timers_dialog.hpp
+  ${FS_SRC_DIR}/fly_score_hotkeys_dialog.cpp
+  ${FS_INC_DIR}/fly_score_hotkeys_dialog.hpp
 )
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${OBS_FLY_SCORE_SRC})

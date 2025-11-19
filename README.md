@@ -1,4 +1,4 @@
-# 🏆 Fly Scoreboard – OBS Studio Plugin
+# 🏆 Fly Scoreboard OBS Studio Plugin
 
 A lightweight, **hotkey-friendly scoreboard overlay** for OBS Studio designed for live sports, esports, and streaming events.  
 It runs a local web server that powers an **auto-updating browser overlay**, allowing real-time updates via dock controls or hotkeys.
