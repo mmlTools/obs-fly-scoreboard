@@ -1,17 +1,45 @@
 #pragma once
+
 #include <QWidget>
 #include <QString>
+#include <QVector>
+#include <QKeySequence>
 
 #include "fly_score_state.hpp"
 
-class QTimer;
-class QTimeEdit;
 class QPushButton;
 class QSpinBox;
 class QLineEdit;
-class QToolButton;
 class QComboBox;
 class QCheckBox;
+class QVBoxLayout;
+class QLabel;
+class QShortcut;
+
+// UI bundle for a single custom field row in the dock
+struct FlyCustomFieldUi {
+	QWidget *row = nullptr;
+	QCheckBox *visibleCheck = nullptr;
+	QLabel *labelLbl = nullptr;
+	QSpinBox *homeSpin = nullptr;
+	QSpinBox *awaySpin = nullptr;
+	QPushButton *minusHome = nullptr;
+	QPushButton *plusHome = nullptr;
+	QPushButton *minusAway = nullptr;
+	QPushButton *plusAway = nullptr;
+};
+
+// UI bundle for a single timer row in the dock
+struct FlyTimerUi {
+	QWidget *row = nullptr;
+	QLabel *labelLbl = nullptr;
+	QLineEdit *timeEdit = nullptr;
+	QPushButton *startStop = nullptr;
+	QPushButton *reset = nullptr;
+};
+
+// Forward-declared; defined in fly_score_hotkeys_dialog.hpp
+struct FlyHotkeyBinding;
 
 class FlyScoreDock : public QWidget {
 	Q_OBJECT
@@ -23,67 +51,74 @@ signals:
 	void requestSave();
 
 public slots:
-	void bumpHomeScore(int delta);
-	void bumpAwayScore(int delta);
-	void bumpHomeRounds(int delta);
-	void bumpAwayRounds(int delta);
+	// Match stats from hotkeys
+	void bumpCustomFieldHome(int index, int delta);
+	void bumpCustomFieldAway(int index, int delta);
+	void toggleCustomFieldVisible(int index);
+
+	// Timers from hotkeys
+	void toggleTimerRunning(int index);
+
+	// Scoreboard level hotkeys
 	void toggleSwap();
-	void toggleShow();
+	void toggleScoreboardVisible();
+
+	// Open hotkeys dialog
+	void openHotkeysDialog();
 
 private slots:
-	void onTick();
-	void onStartStop();
-	void onReset();
-	void onTimeEdited();
-	void onBrowseHomeLogo();
-	void onBrowseAwayLogo();
-	void onApply();
 	void onClearTeamsAndReset();
+
+	void onOpenCustomFieldsDialog();
+	void onOpenTimersDialog();
+	void onOpenTeamsDialog();
 
 private:
 	void loadState();
 	void saveState();
 	void refreshUiFromState(bool onlyTimeIfRunning = false);
-	void ensureTimerAccounting();
 
-	QString copyLogoToOverlay(const QString &srcAbs, const QString &baseName);
-	QString normalizedExtFromMime(const QString &path) const;
+	// Custom fields quick controls
+	void clearAllCustomFieldRows();
+	void loadCustomFieldControlsFromState();
+	void syncCustomFieldControlsToState();
 
-	bool deleteLogoIfExists(const QString &relPath);
+	// Timers quick controls
+	void clearAllTimerRows();
+	void loadTimerControlsFromState();
+
+	// Hotkeys (dialog-driven, plugin-local)
+	QVector<FlyHotkeyBinding> buildDefaultHotkeyBindings() const;
+	QVector<FlyHotkeyBinding> buildMergedHotkeyBindings() const;
+	void applyHotkeyBindings(const QVector<FlyHotkeyBinding> &bindings);
+	void clearAllShortcuts();
 
 private:
-	QTimer *uiTimer_ = nullptr;
 	QString dataDir_;
 	FlyState st_;
 
-	QLineEdit *time_label_ = nullptr;
-	QComboBox *mode_ = nullptr;
-
-	QLineEdit *time_ = nullptr;
-	QPushButton *startStop_ = nullptr;
-	QPushButton *reset_ = nullptr;
-
-	QSpinBox *homeScore_ = nullptr;
-	QSpinBox *awayScore_ = nullptr;
-	QSpinBox *homeRounds_ = nullptr;
-	QSpinBox *awayRounds_ = nullptr;
-
-	QLineEdit *homeTitle_ = nullptr;
-	QLineEdit *homeSub_ = nullptr;
-	QLineEdit *homeLogo_ = nullptr;
-	QToolButton *homeBrowse_ = nullptr;
-
-	QLineEdit *awayTitle_ = nullptr;
-	QLineEdit *awaySub_ = nullptr;
-	QLineEdit *awayLogo_ = nullptr;
-	QToolButton *awayBrowse_ = nullptr;
-
+	// Scoreboard-level toggles
 	QCheckBox *swapSides_ = nullptr;
 	QCheckBox *showScoreboard_ = nullptr;
 
-	QPushButton *applyBtn_ = nullptr;
+	QPushButton *teamsBtn_ = nullptr;
+
+	// Custom fields quick area
+	QVBoxLayout *customFieldsLayout_ = nullptr;
+	QPushButton *editFieldsBtn_ = nullptr;
+	QVector<FlyCustomFieldUi> customFields_;
+
+	// Timers quick area
+	QVBoxLayout *timersLayout_ = nullptr;
+	QPushButton *editTimersBtn_ = nullptr;
+	QVector<FlyTimerUi> timers_;
+
+	// Hotkey bindings + actual shortcuts
+	QVector<FlyHotkeyBinding> hotkeyBindings_;
+	QVector<QShortcut *> shortcuts_;
 };
 
+// Dock helpers (OBS frontend registration)
 void fly_create_dock();
 void fly_destroy_dock();
 

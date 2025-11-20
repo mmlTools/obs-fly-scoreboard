@@ -9,28 +9,81 @@
   </head>
   <body>
     <div id="scoreboard" class="fs-board">
-      <div class="fs-side fs-home">
-        <div class="fs-logo"><img id="homeLogo" alt="" /></div>
-        <div class="fs-team">
-          <div id="homeTitle" class="fs-title">Home</div>
-          <div id="homeSub" class="fs-subtitle"></div>
+      <!-- Left side: Team X (logical left team, auto-swapped via swap_sides) -->
+      <div class="fs-side fs-team-x">
+        <div class="fs-logo" fs-if="team_x.logo">
+          <img alt="" src="{{team_x.logo}}" />
         </div>
-        <div id="homeScore" class="fs-score">0</div>
+        <div class="fs-team">
+          <div class="fs-title">{{team_x.title}}</div>
+          <div class="fs-subtitle">{{team_x.subtitle}}</div>
+        </div>
+        <!-- Main score from custom_fields[0] mapped via fields_xy[0].x -->
+        <div class="fs-score">
+          {{fields_xy[0].x}}
+        </div>
       </div>
 
+      <!-- Center area: timer + aggregate score (e.g. Points) -->
       <div class="fs-center">
-        <div id="time_label" class="fs-time_label">First Half</div>
-        <div id="timer" class="fs-timer">10:00</div>
-        <div id="aggScore" class="fs-agg">0 : 0</div>
+        <div id="time_label" class="fs-time_label">
+          {{timers[0].label}}
+        </div>
+        <div id="timer" class="fs-timer">
+          {{timers[0].mmss}}
+        </div>
+
+        <div id="aggScore" class="fs-agg" fs-if="fields_xy[1].visible">
+          {{fields_xy[1].x}} : {{fields_xy[1].y}}
+        </div>
       </div>
 
-      <div class="fs-side fs-away">
-        <div id="awayScore" class="fs-score">0</div>
-        <div class="fs-team">
-          <div id="awayTitle" class="fs-title text-right">Guests</div>
-          <div id="awaySub" class="fs-subtitle text-right"></div>
+      <!-- Right side: Team Y (logical right team, auto-swapped via swap_sides) -->
+      <div class="fs-side fs-team-y">
+        <!-- Main score from custom_fields[0] mapped via fields_xy[0].y -->
+        <div class="fs-score">
+          {{fields_xy[0].y}}
         </div>
-        <div class="fs-logo"><img id="awayLogo" alt="" /></div>
+        <div class="fs-team">
+          <div class="fs-title text-right">{{team_y.title}}</div>
+          <div class="fs-subtitle text-right">
+            {{team_y.subtitle}}
+          </div>
+        </div>
+        <div class="fs-logo" fs-if="team_y.logo">
+          <img alt="" src="{{team_y.logo}}" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom stats table (example: first 3 fields) -->
+    <div class="fs-custom">
+      <div class="fs-custom-row" fs-if="fields_xy[0].visible">
+        <span class="fs-custom-label">{{fields_xy[0].label}}</span>
+        <span class="fs-custom-home">{{fields_xy[0].x}}</span>
+        <span class="fs-custom-away">{{fields_xy[0].y}}</span>
+      </div>
+      <div class="fs-custom-row" fs-if="fields_xy[1].visible">
+        <span class="fs-custom-label">{{fields_xy[1].label}}</span>
+        <span class="fs-custom-home">{{fields_xy[1].x}}</span>
+        <span class="fs-custom-away">{{fields_xy[1].y}}</span>
+      </div>
+      <div class="fs-custom-row" fs-if="fields_xy[2].visible">
+        <span class="fs-custom-label">{{fields_xy[2].label}}</span>
+        <span class="fs-custom-home">{{fields_xy[2].x}}</span>
+        <span class="fs-custom-away">{{fields_xy[2].y}}</span>
+      </div>
+    </div>
+
+    <!-- Second block example: reusing fields + extra timers -->
+    <div class="fs-custom">
+      <div class="fs-custom-row" fs-if="timers[1]">
+        <span class="fs-custom-label">{{timers[1].label}}</span>
+        <span class="fs-custom-home">{{timers[1].mmss}}</span>
+      </div>
+      <div class="fs-custom-row" fs-if="timers[2]">
+        <span class="fs-custom-label">{{timers[2].label}}</span>
+        <span class="fs-custom-home">{{timers[2].mmss}}</span>
       </div>
     </div>
 
