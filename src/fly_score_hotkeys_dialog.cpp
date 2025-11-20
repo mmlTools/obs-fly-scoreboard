@@ -270,21 +270,24 @@ QVector<FlyHotkeyBinding> fly_hotkeys_load(const QString &dataDir)
 	if (!f.exists() || !f.open(QIODevice::ReadOnly))
 		return out;
 
-	const auto doc = QJsonDocument::fromJson(f.readAll());
+	const QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
 	if (!doc.isArray())
 		return out;
 
-	const auto arr = doc.array();
+	const QJsonArray arr = doc.array();
 	out.reserve(arr.size());
 
-	for (const auto &v : arr) {
-		const auto o = v.toObject();
+	for (const QJsonValue v : arr) {
+		if (!v.isObject())
+			continue;
+
+		const QJsonObject o = v.toObject();
 
 		FlyHotkeyBinding b;
 		b.actionId = o.value(QStringLiteral("id")).toString();
 		b.label = o.value(QStringLiteral("label")).toString();
-		const QString seqStr = o.value(QStringLiteral("seq")).toString();
 
+		const QString seqStr = o.value(QStringLiteral("seq")).toString();
 		if (!seqStr.isEmpty())
 			b.sequence = QKeySequence(seqStr, QKeySequence::PortableText);
 
