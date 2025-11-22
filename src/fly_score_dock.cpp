@@ -110,30 +110,60 @@ QVector<FlyHotkeyBinding> FlyScoreDock::buildMergedHotkeyBindings() const
 
 bool FlyScoreDock::init()
 {
-	// Resolve global data root (auto-default on first run, no UI)
 	dataDir_ = fly_get_data_root();
 	loadState();
 
-	// Load persisted hotkeys (if any) from hotkeys.json
 	hotkeyBindings_ = fly_hotkeys_load(dataDir_);
 
-	auto *root = new QVBoxLayout(this);
+	setObjectName(QStringLiteral("FlyScoreDock"));
+	setAttribute(Qt::WA_StyledBackground, true);
+	setStyleSheet(QStringLiteral(
+		"FlyScoreDock { background: rgba(39, 42, 51, 1.0)}"
+	));
+
+	auto *outer = new QVBoxLayout(this);
+	outer->setContentsMargins(0, 0, 0, 0);
+	outer->setSpacing(0);
+
+	auto *content = new QWidget(this);
+	content->setObjectName(QStringLiteral("flyScoreContent"));
+	content->setAttribute(Qt::WA_StyledBackground, true);
+
+	auto *root = new QVBoxLayout(content);
 	root->setContentsMargins(8, 8, 8, 8);
 	root->setSpacing(8);
 
+	outer->addWidget(content);
+
+	const QString cardStyle = QStringLiteral(
+		"QGroupBox {"
+		"  background-color: rgba(255, 255, 255, 0.06);"
+		"  border: 1px solid rgba(255, 255, 255, 0.10);"
+		"  border-radius: 6px;"
+		"  margin-top: 10px;"
+		"}"
+		"QGroupBox::title {"
+		"  subcontrol-origin: margin;"
+		"  left: 8px;"
+		"  top: -2px;"
+		"  padding: 0 6px;"
+		"}"
+	);
+
 	// ---------------------------------------------------------------------
-	// Scoreboard box (just toggles + teams button on a single line)
+	// Scoreboard card
 	// ---------------------------------------------------------------------
-	auto *scoreBox = new QGroupBox(QStringLiteral("Scoreboard"), this);
+	auto *scoreBox = new QGroupBox(QStringLiteral("Scoreboard"), content);
+	scoreBox->setStyleSheet(cardStyle);
 
 	auto *scoreVBox = new QVBoxLayout(scoreBox);
 	scoreVBox->setContentsMargins(8, 8, 8, 8);
 	scoreVBox->setSpacing(6);
 
-	// One row: [Swap] [Show] .......... [Configure teams]
 	swapSides_ = new QCheckBox(QStringLiteral("Swap Home ↔ Guests"), scoreBox);
 	showScoreboard_ = new QCheckBox(QStringLiteral("Show scoreboard"), scoreBox);
-	teamsBtn_ = new QPushButton(tr("Teams"), scoreBox);
+
+	teamsBtn_ = new QPushButton(QStringLiteral("Teams"), scoreBox);
 	teamsBtn_->setMinimumWidth(110);
 	teamsBtn_->setMaximumWidth(130);
 	teamsBtn_->setCursor(Qt::PointingHandCursor);
@@ -145,7 +175,7 @@ bool FlyScoreDock::init()
 	scoreRow->addWidget(swapSides_);
 	scoreRow->addSpacing(12);
 	scoreRow->addWidget(showScoreboard_);
-	scoreRow->addStretch(1); // ← margin-left: auto effect
+	scoreRow->addStretch(1);
 	scoreRow->addWidget(teamsBtn_);
 
 	scoreVBox->addLayout(scoreRow);
@@ -154,14 +184,18 @@ bool FlyScoreDock::init()
 	// ---------------------------------------------------------------------
 	// Match stats card
 	// ---------------------------------------------------------------------
-	auto *customBox = new QGroupBox(QStringLiteral("Match stats"), this);
+	auto *customBox = new QGroupBox(QStringLiteral("Match stats"), content);
+	customBox->setStyleSheet(cardStyle);
+
 	auto *customVBox = new QVBoxLayout(customBox);
 	customVBox->setContentsMargins(8, 8, 8, 8);
 	customVBox->setSpacing(6);
 
-	// Header with Configure button on the right
 	auto *customHeaderRow = new QHBoxLayout();
-	editFieldsBtn_ = new QPushButton(tr("Configure"), customBox);
+	customHeaderRow->setContentsMargins(0, 0, 0, 0);
+	customHeaderRow->setSpacing(6);
+
+	editFieldsBtn_ = new QPushButton(QStringLiteral("Configure"), customBox);
 	editFieldsBtn_->setMinimumWidth(110);
 	editFieldsBtn_->setMaximumWidth(130);
 	editFieldsBtn_->setCursor(Qt::PointingHandCursor);
@@ -178,18 +212,24 @@ bool FlyScoreDock::init()
 	customBox->setLayout(customVBox);
 
 	// ---------------------------------------------------------------------
-	// Timers card (unchanged)
+	// Timers card
 	// ---------------------------------------------------------------------
-	auto *timersBox = new QGroupBox(QStringLiteral("Timers"), this);
+	auto *timersBox = new QGroupBox(QStringLiteral("Timers"), content);
+	timersBox->setStyleSheet(cardStyle);
+
 	auto *timersVBox = new QVBoxLayout(timersBox);
 	timersVBox->setContentsMargins(8, 8, 8, 8);
 	timersVBox->setSpacing(6);
 
 	auto *timersHeaderRow = new QHBoxLayout();
-	editTimersBtn_ = new QPushButton(tr("Configure"), timersBox);
+	timersHeaderRow->setContentsMargins(0, 0, 0, 0);
+	timersHeaderRow->setSpacing(6);
+
+	editTimersBtn_ = new QPushButton(QStringLiteral("Configure"), timersBox);
 	editTimersBtn_->setMinimumWidth(110);
 	editTimersBtn_->setMaximumWidth(130);
 	editTimersBtn_->setCursor(Qt::PointingHandCursor);
+
 	timersHeaderRow->addStretch(1);
 	timersHeaderRow->addWidget(editTimersBtn_);
 
@@ -202,27 +242,29 @@ bool FlyScoreDock::init()
 	timersBox->setLayout(timersVBox);
 
 	// ---------------------------------------------------------------------
-	// Bottom row buttons (footer, outside cards)
+	// Bottom row buttons (footer outside cards)
 	// ---------------------------------------------------------------------
 	auto *bottomRow = new QHBoxLayout();
+	bottomRow->setContentsMargins(0, 0, 0, 0);
+	bottomRow->setSpacing(6);
 
-	auto *refreshBrowserBtn = new QPushButton(QStringLiteral("🔄"), this);
+	auto *refreshBrowserBtn = new QPushButton(QStringLiteral("🔄"), content);
 	refreshBrowserBtn->setCursor(Qt::PointingHandCursor);
 	refreshBrowserBtn->setToolTip(QStringLiteral("Refresh ‘%1’").arg(kBrowserSourceName));
 
-	auto *addSourceBtn = new QPushButton(QStringLiteral("🌐"), this);
+	auto *addSourceBtn = new QPushButton(QStringLiteral("🌐"), content);
 	addSourceBtn->setCursor(Qt::PointingHandCursor);
 	addSourceBtn->setToolTip(QStringLiteral("Add scoreboard Browser Source to current scene"));
 
-	auto *clearBtn = new QPushButton(QStringLiteral("🧹"), this);
+	auto *clearBtn = new QPushButton(QStringLiteral("🧹"), content);
 	clearBtn->setCursor(Qt::PointingHandCursor);
 	clearBtn->setToolTip(QStringLiteral("Reset stats and timers (keep teams & logos)"));
 
-	auto *settingsBtn = new QPushButton(QStringLiteral("⚙️"), this);
+	auto *settingsBtn = new QPushButton(QStringLiteral("⚙️"), content);
 	settingsBtn->setCursor(Qt::PointingHandCursor);
 	settingsBtn->setToolTip(QStringLiteral("Settings"));
 
-	auto *hotkeysBtn = new QPushButton(QStringLiteral("⌨️"), this);
+	auto *hotkeysBtn = new QPushButton(QStringLiteral("⌨️"), content);
 	hotkeysBtn->setCursor(Qt::PointingHandCursor);
 	hotkeysBtn->setToolTip(QStringLiteral("Configure Fly Scoreboard hotkeys"));
 
@@ -234,15 +276,18 @@ bool FlyScoreDock::init()
 	bottomRow->addWidget(hotkeysBtn);
 
 	// ---------------------------------------------------------------------
-	// Layout assembly: cards + footer + Ko-fi / custom overlay card
+	// Layout assembly (TierDock style)
 	// ---------------------------------------------------------------------
 	root->addWidget(scoreBox);
 	root->addWidget(customBox);
 	root->addWidget(timersBox);
 	root->addLayout(bottomRow);
 	root->addStretch(1);
-	root->addWidget(fly_create_widget_carousel(this));
+	root->addWidget(fly_create_widget_carousel(content));
 
+	// ---------------------------------------------------------------------
+	// Signals
+	// ---------------------------------------------------------------------
 	connect(swapSides_, &QCheckBox::toggled, this, [this](bool on) {
 		st_.swap_sides = on;
 		saveState();
@@ -273,7 +318,7 @@ bool FlyScoreDock::init()
 			return;
 		}
 
-		QString url = QStringLiteral("http://127.0.0.1:%1/").arg(st_.server_port);
+		const QString url = QStringLiteral("http://127.0.0.1:%1/").arg(st_.server_port);
 
 		obs_data_t *settings = obs_data_create();
 		obs_data_set_string(settings, "url", url.toUtf8().constData());
@@ -297,7 +342,7 @@ bool FlyScoreDock::init()
 		obs_source_release(browser);
 		obs_source_release(sceneSource);
 #else
-			LOGW("Frontend API not enabled; cannot add browser source from dock.");
+		LOGW("Frontend API not enabled; cannot add browser source from dock.");
 #endif
 	});
 
@@ -1046,6 +1091,7 @@ void fly_create_dock()
 #endif
 
 	g_dockContent = panel;
+	LOGI("Tier dock created");
 }
 
 void fly_destroy_dock()

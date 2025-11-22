@@ -19,7 +19,7 @@
 #include <cstring>
 
 // -----------------------------------------------------------------------------
-// Refresh existing browser by name (unchanged)
+// Refresh existing browser by name
 // -----------------------------------------------------------------------------
 
 bool fly_refresh_browser_source_by_name(const QString &name)
