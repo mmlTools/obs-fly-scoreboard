@@ -168,13 +168,13 @@ This includes:
     │   fly_score_dock.cpp
     │   fly_score_fields_dialog.cpp
     │   fly_score_hotkeys_dialog.cpp
-    │   fly_score_kofi_widget.cpp
+    │   widgets.cpp
     │   fly_score_logo_helpers.cpp
     │   fly_score_obs_helpers.cpp
     │   fly_score_paths.cpp
     │   fly_score_plugin.cpp
     │   fly_score_qt_helpers.cpp
-    │   fly_score_server.cpp
+    │   server.cpp
     │   fly_score_settings_dialog.cpp
     │   fly_score_state.cpp
     │   fly_score_teams_dialog.cpp
@@ -187,13 +187,13 @@ This includes:
     │       fly_score_dock.hpp
     │       fly_score_fields_dialog.hpp
     │       fly_score_hotkeys_dialog.hpp
-    │       fly_score_kofi_widget.hpp
+    │       widgets.hpp
     │       fly_score_log.hpp
     │       fly_score_logo_helpers.hpp
     │       fly_score_obs_helpers.hpp
     │       fly_score_paths.hpp
     │       fly_score_qt_helpers.hpp
-    │       fly_score_server.hpp
+    │       server.hpp
     │       fly_score_settings_dialog.hpp
     │       fly_score_state.hpp
     │       fly_score_teams_dialog.hpp

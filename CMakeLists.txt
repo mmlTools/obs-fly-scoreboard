@@ -2,17 +2,6 @@ cmake_minimum_required(VERSION 3.28...3.30)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
 
-# ---------------------------------------------------------------------------
-# Project metadata
-# ---------------------------------------------------------------------------
-if(NOT DEFINED _name)
-  set(_name "fly-scoreboard")
-endif()
-
-if(NOT DEFINED _version)
-  set(_version "1.0.0")
-endif()
-
 project(${_name} VERSION ${_version} LANGUAGES C CXX)
 
 # ---------------------------------------------------------------------------
@@ -141,13 +130,13 @@ set(OBS_FLY_SCORE_SRC
   ${FS_SRC_DIR}/fly_score_qt_helpers.cpp
   ${FS_SRC_DIR}/fly_score_obs_helpers.cpp
   ${FS_SRC_DIR}/fly_score_logo_helpers.cpp
-  ${FS_SRC_DIR}/fly_score_kofi_widget.cpp
+  ${FS_SRC_DIR}/widget.cpp
   ${FS_SRC_DIR}/fly_score_paths.cpp
 )
 
 if(ENABLE_HTTP_SERVER)
   list(APPEND OBS_FLY_SCORE_SRC
-    ${FS_SRC_DIR}/fly_score_server.cpp
+    ${FS_SRC_DIR}/server.cpp
   )
 endif()
 
