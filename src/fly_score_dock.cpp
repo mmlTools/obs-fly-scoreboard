@@ -5,14 +5,14 @@
 
 #include "fly_score_dock.hpp"
 #include "fly_score_state.hpp"
-#include "fly_score_server.hpp"
+#include "server.hpp"
 #include "fly_score_settings_dialog.hpp"
 #include "fly_score_const.hpp"
 #include "fly_score_paths.hpp"
 #include "fly_score_qt_helpers.hpp"
 #include "fly_score_obs_helpers.hpp"
 #include "fly_score_logo_helpers.hpp"
-#include "fly_score_kofi_widget.hpp"
+#include "widgets.hpp"
 #include "fly_score_teams_dialog.hpp"
 #include "fly_score_fields_dialog.hpp"
 #include "fly_score_timers_dialog.hpp"
@@ -47,6 +47,8 @@
 #include <QSpacerItem>
 #include <QStyle>
 #include <QToolButton>
+#include <QTimer>
+#include <QScrollArea>
 
 #include <algorithm>
 
@@ -119,9 +121,7 @@ bool FlyScoreDock::init()
 
 	setObjectName(QStringLiteral("FlyScoreDock"));
 	setAttribute(Qt::WA_StyledBackground, true);
-	setStyleSheet(QStringLiteral(
-		"FlyScoreDock { background: rgba(39, 42, 51, 1.0)}"
-	));
+	setStyleSheet(QStringLiteral("FlyScoreDock { background: rgba(39, 42, 51, 1.0)}"));
 
 	auto *outer = new QVBoxLayout(this);
 	outer->setContentsMargins(0, 0, 0, 0);
@@ -137,24 +137,19 @@ bool FlyScoreDock::init()
 
 	outer->addWidget(content);
 
-	const QString cardStyle = QStringLiteral(
-		"QGroupBox {"
-		"  background-color: rgba(255, 255, 255, 0.06);"
-		"  border: 1px solid rgba(255, 255, 255, 0.10);"
-		"  border-radius: 6px;"
-		"  margin-top: 10px;"
-		"}"
-		"QGroupBox::title {"
-		"  subcontrol-origin: margin;"
-		"  left: 8px;"
-		"  top: -2px;"
-		"  padding: 0 6px;"
-		"}"
-	);
+	const QString cardStyle = QStringLiteral("QGroupBox {"
+						 "  background-color: rgba(255, 255, 255, 0.06);"
+						 "  border: 1px solid rgba(255, 255, 255, 0.10);"
+						 "  border-radius: 6px;"
+						 "  margin-top: 10px;"
+						 "}"
+						 "QGroupBox::title {"
+						 "  subcontrol-origin: margin;"
+						 "  left: 8px;"
+						 "  top: -2px;"
+						 "  padding: 0 6px;"
+						 "}");
 
-	// ---------------------------------------------------------------------
-	// Scoreboard card
-	// ---------------------------------------------------------------------
 	auto *scoreBox = new QGroupBox(QStringLiteral("Scoreboard"), content);
 	scoreBox->setStyleSheet(cardStyle);
 
@@ -183,9 +178,6 @@ bool FlyScoreDock::init()
 	scoreVBox->addLayout(scoreRow);
 	scoreBox->setLayout(scoreVBox);
 
-	// ---------------------------------------------------------------------
-	// Match stats card
-	// ---------------------------------------------------------------------
 	auto *customBox = new QGroupBox(QStringLiteral("Match stats"), content);
 	customBox->setStyleSheet(cardStyle);
 
@@ -213,9 +205,6 @@ bool FlyScoreDock::init()
 	customVBox->addLayout(customFieldsLayout_);
 	customBox->setLayout(customVBox);
 
-	// ---------------------------------------------------------------------
-	// Timers card
-	// ---------------------------------------------------------------------
 	auto *timersBox = new QGroupBox(QStringLiteral("Timers"), content);
 	timersBox->setStyleSheet(cardStyle);
 
@@ -243,9 +232,6 @@ bool FlyScoreDock::init()
 	timersVBox->addLayout(timersLayout_);
 	timersBox->setLayout(timersVBox);
 
-	// ---------------------------------------------------------------------
-	// Bottom row buttons (footer outside cards)
-	// ---------------------------------------------------------------------
 	auto *bottomRow = new QHBoxLayout();
 	bottomRow->setContentsMargins(0, 0, 0, 0);
 	bottomRow->setSpacing(6);
@@ -262,6 +248,36 @@ bool FlyScoreDock::init()
 	clearBtn->setCursor(Qt::PointingHandCursor);
 	clearBtn->setToolTip(QStringLiteral("Reset stats and timers (keep teams & logos)"));
 
+	auto *serverToggleBtn = new QPushButton(content);
+	serverToggleBtn->setCursor(Qt::PointingHandCursor);
+	serverToggleBtn->setToolTip(QStringLiteral("Start local webserver for overlay"));
+
+	auto *serverBtnLayout = new QHBoxLayout();
+	serverBtnLayout->setContentsMargins(8, 0, 8, 0);
+	serverBtnLayout->setSpacing(6);
+
+	auto *serverStatusDot = new QLabel(serverToggleBtn);
+	serverStatusDot->setToolTip(QStringLiteral("Webserver status"));
+	serverStatusDot->setFixedSize(10, 10);
+
+	auto *serverLabel = new QLabel(QStringLiteral("Start server"), serverToggleBtn);
+	serverLabel->setAlignment(Qt::AlignCenter);
+
+	serverBtnLayout->addWidget(serverStatusDot);
+	serverBtnLayout->addWidget(serverLabel);
+
+	serverToggleBtn->setLayout(serverBtnLayout);
+
+	QFontMetrics fm(serverLabel->font());
+	int textWidth = fm.horizontalAdvance(serverLabel->text());
+	int dotWidth = serverStatusDot->sizeHint().width();
+	int margins = (3 * 8);
+	int spacing = serverBtnLayout->spacing();
+
+	int minWidth = textWidth + dotWidth + spacing + margins + 4;
+	serverToggleBtn->setMinimumWidth(minWidth);
+	serverBtnLayout->addStretch(1);
+
 	auto *settingsBtn = new QPushButton(QStringLiteral("⚙️"), content);
 	settingsBtn->setCursor(Qt::PointingHandCursor);
 	settingsBtn->setToolTip(QStringLiteral("Settings"));
@@ -273,23 +289,19 @@ bool FlyScoreDock::init()
 	bottomRow->addWidget(refreshBrowserBtn);
 	bottomRow->addWidget(addSourceBtn);
 	bottomRow->addWidget(clearBtn);
+	bottomRow->addWidget(serverToggleBtn);
+
 	bottomRow->addStretch(1);
 	bottomRow->addWidget(settingsBtn);
 	bottomRow->addWidget(hotkeysBtn);
 
-	// ---------------------------------------------------------------------
-	// Layout assembly (TierDock style)
-	// ---------------------------------------------------------------------
 	root->addWidget(scoreBox);
 	root->addWidget(customBox);
 	root->addWidget(timersBox);
 	root->addLayout(bottomRow);
 	root->addStretch(1);
-	root->addWidget(fly_create_widget_carousel(content));
+	root->addWidget(create_widget_carousel(content));
 
-	// ---------------------------------------------------------------------
-	// Signals
-	// ---------------------------------------------------------------------
 	connect(swapSides_, &QCheckBox::toggled, this, [this](bool on) {
 		st_.swap_sides = on;
 		saveState();
@@ -300,10 +312,10 @@ bool FlyScoreDock::init()
 	});
 
 	connect(refreshBrowserBtn, &QPushButton::clicked, this, [this]() {
-	    const bool ok = fly_refresh_browser_source_by_name(QString::fromUtf8(kBrowserSourceName));
-	    ensureResourcesDefaults();
-	    if (!ok)
-	        LOGW("Refresh failed for Browser Source: %s", kBrowserSourceName);
+		const bool ok = fly_refresh_browser_source_by_name(QString::fromUtf8(kBrowserSourceName));
+		ensureResourcesDefaults();
+		if (!ok)
+			LOGW("Refresh failed for Browser Source: %s", kBrowserSourceName);
 	});
 
 	connect(addSourceBtn, &QPushButton::clicked, this, [this]() {
@@ -321,7 +333,8 @@ bool FlyScoreDock::init()
 			return;
 		}
 
-		const QString url = QStringLiteral("http://127.0.0.1:%1/").arg(st_.server_port);
+		const int port = (st_.server_port > 0 ? st_.server_port : server_port());
+		const QString url = QStringLiteral("http://127.0.0.1:%1/index.html").arg(port);
 
 		obs_data_t *settings = obs_data_create();
 		obs_data_set_string(settings, "url", url.toUtf8().constData());
@@ -365,6 +378,70 @@ bool FlyScoreDock::init()
 
 	hotkeyBindings_ = buildMergedHotkeyBindings();
 	applyHotkeyBindings(hotkeyBindings_);
+
+	auto styleDot = [](QLabel *dot, bool ok) {
+		if (!dot)
+			return;
+		dot->setFixedSize(12, 12);
+		dot->setStyleSheet(QString("border-radius:6px;"
+					   "background-color:%1;"
+					   "border:1px solid rgba(0,0,0,0.25);")
+					   .arg(ok ? "#39d353" : "#ff6b6b"));
+	};
+
+	auto updateServerUi = [styleDot, serverStatusDot, serverToggleBtn, serverLabel]() {
+		const int p = server_port();
+		const bool running = server_is_running();
+
+		styleDot(serverStatusDot, running);
+
+		if (serverToggleBtn) {
+			if (running) {
+				serverLabel->setText(QStringLiteral("Stop server"));
+				serverToggleBtn->setToolTip(
+					QStringLiteral("Stop local webserver for overlay (:%1)").arg(p));
+			} else {
+				serverLabel->setText(QStringLiteral("Start server"));
+				serverToggleBtn->setToolTip(
+					QStringLiteral("Start local webserver for overlay (:%1)").arg(p > 0 ? p : 8089));
+			}
+		}
+	};
+
+	updateServerUi();
+
+	connect(serverToggleBtn, &QPushButton::clicked, this, [this, updateServerUi]() mutable {
+		// Overlay root comes from settings (same as settings dialog)
+		QString docRoot = fly_get_data_root_no_ui();
+		if (docRoot.isEmpty())
+			docRoot = dataDir_;
+
+		if (!server_is_running()) {
+			ensureResourcesDefaults();
+
+			int desiredPort = st_.server_port > 0 ? st_.server_port : 8089;
+			int bound = server_start(docRoot, desiredPort);
+			if (!bound) {
+				LOGW("Could not start webserver near port %d", desiredPort);
+			} else {
+				if (bound != desiredPort) {
+					LOGI("Server port adjusted to %d (requested %d)", bound, desiredPort);
+				}
+				st_.server_port = bound;
+				saveState();
+			}
+		} else {
+			server_stop();
+		}
+
+		updateServerUi();
+	});
+
+	QTimer::singleShot(200, this, [updateServerUi]() mutable {
+		if (server_is_running()) {
+			updateServerUi();
+		}
+	});
 
 	return true;
 }
@@ -1075,11 +1152,11 @@ void FlyScoreDock::onOpenTeamsDialog()
 
 void FlyScoreDock::ensureResourcesDefaults()
 {
-    QString resDir = fly_get_data_root_no_ui();
-    if (resDir.isEmpty())
-        resDir = dataDir_; 
+	QString resDir = fly_get_data_root_no_ui();
+	if (resDir.isEmpty())
+		resDir = dataDir_;
 
-    fly_state_ensure_json_exists(resDir, &st_);
+	fly_state_ensure_json_exists(resDir, &st_);
 }
 
 // -----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-#include "fly_score_kofi_widget.hpp"
+#include "widgets.hpp"
 
 #include <QStackedWidget>
 #include <QTimer>
@@ -23,7 +23,7 @@
 // Ko-fi card
 // -----------------------------------------------------------------------------
 
-QWidget *fly_create_kofi_card(QWidget *parent)
+QWidget *widget_create_kofi_card(QWidget *parent)
 {
 	auto *kofiCard = new QFrame(parent);
 	kofiCard->setObjectName(QStringLiteral("kofiCard"));
@@ -74,7 +74,7 @@ QWidget *fly_create_kofi_card(QWidget *parent)
 // Custom overlay order card
 // -----------------------------------------------------------------------------
 
-QWidget *fly_create_custom_overlay_card(QWidget *parent)
+QWidget *widget_create_custom_overlay_card(QWidget *parent)
 {
 	auto *overlayCard = new QFrame(parent);
 	overlayCard->setObjectName(QStringLiteral("customOverlayCard"));
@@ -125,7 +125,7 @@ QWidget *fly_create_custom_overlay_card(QWidget *parent)
 // Discord card
 // -----------------------------------------------------------------------------
 
-QWidget *fly_create_discord_card(QWidget *parent)
+QWidget *widget_create_discord_card(QWidget *parent)
 {
 	auto *discordCard = new QFrame(parent);
 	discordCard->setObjectName(QStringLiteral("discordCard"));
@@ -189,12 +189,118 @@ QWidget *fly_create_discord_card(QWidget *parent)
 }
 
 // -----------------------------------------------------------------------------
+// Shop card
+// -----------------------------------------------------------------------------
+
+QWidget *widget_create_shopping_card(QWidget *parent)
+{
+	auto *card = new QFrame(parent);
+	card->setObjectName(QStringLiteral("sltShopCard"));
+
+	auto *layout = new QVBoxLayout(card);
+	layout->setContentsMargins(10, 10, 10, 10);
+	layout->setSpacing(6);
+
+	auto *headerRow = new QHBoxLayout();
+	headerRow->setContentsMargins(0, 0, 0, 0);
+	headerRow->setSpacing(6);
+
+	auto *badge = new QLabel(QStringLiteral("PRO"), card);
+	badge->setObjectName(QStringLiteral("sltShopBadge"));
+
+	auto *title = new QLabel(QObject::tr("Get custom overlays"), card);
+	title->setObjectName(QStringLiteral("sltShopTitle"));
+
+	headerRow->addWidget(badge);
+	headerRow->addWidget(title, 1);
+	headerRow->addStretch();
+
+	auto *subtitle = new QLabel(QObject::tr("Want unique, animated stream overlays, scoreboards and lower thirds?\n"
+						"Visit my overlays shop to order custom designs for all my plugins."),
+				    card);
+
+	subtitle->setObjectName(QStringLiteral("sltShopSubtitle"));
+	subtitle->setWordWrap(true);
+
+	auto *buttonRow = new QHBoxLayout();
+	buttonRow->setContentsMargins(0, 0, 0, 0);
+	buttonRow->setSpacing(8);
+
+	auto *shopBtn = new QPushButton(QObject::tr("Open Web Shop"), card);
+	shopBtn->setCursor(Qt::PointingHandCursor);
+	shopBtn->setObjectName(QStringLiteral("sltShopButton"));
+
+	auto *supportLbl = new QLabel(QObject::tr("Your support helps future updates ❤️"), card);
+	supportLbl->setObjectName(QStringLiteral("sltShopSupport"));
+	supportLbl->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+	buttonRow->addWidget(shopBtn, 0);
+	buttonRow->addStretch();
+	buttonRow->addWidget(supportLbl, 0);
+
+	layout->addLayout(headerRow);
+	layout->addWidget(subtitle);
+	layout->addLayout(buttonRow);
+
+	card->setStyleSheet("QFrame#sltShopCard {"
+			    "  border-radius: 6px;"
+			    "  border: 1px solid rgba(255, 255, 255, 40);"
+			    "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1,"
+			    "    stop:0 rgba(45, 50, 65, 255),"
+			    "    stop:1 rgba(18, 105, 160, 255));"
+			    "}"
+			    "QLabel#sltShopBadge {"
+			    "  padding: 2px 6px;"
+			    "  border-radius: 4px;"
+			    "  background: rgba(255, 255, 255, 0.12);"
+			    "  color: #ffffff;"
+			    "  font-weight: 700;"
+			    "  font-size: 9px;"
+			    "  letter-spacing: 0.12em;"
+			    "  text-transform: uppercase;"
+			    "}"
+			    "QLabel#sltShopTitle {"
+			    "  color: #ffffff;"
+			    "  font-size: 12px;"
+			    "  font-weight: 600;"
+			    "}"
+			    "QLabel#sltShopSubtitle {"
+			    "  color: rgba(255, 255, 255, 0.85);"
+			    "  font-size: 10px;"
+			    "}"
+			    "QLabel#sltShopSupport {"
+			    "  color: rgba(255, 255, 255, 0.7);"
+			    "  font-size: 9px;"
+			    "}"
+			    "QPushButton#sltShopButton {"
+			    "  padding: 4px 10px;"
+			    "  border-radius: 4px;"
+			    "  border: 1px solid rgba(255, 255, 255, 80);"
+			    "  background: rgba(255, 255, 255, 0.08);"
+			    "  color: #ffffff;"
+			    "  font-size: 10px;"
+			    "  font-weight: 600;"
+			    "}"
+			    "QPushButton#sltShopButton:hover {"
+			    "  background: rgba(255, 255, 255, 0.20);"
+			    "}"
+			    "QPushButton#sltShopButton:pressed {"
+			    "  background: rgba(255, 255, 255, 0.30);"
+			    "}");
+
+	const QUrl shopUrl(QStringLiteral("https://ko-fi.com/mmltech/shop"));
+
+	QObject::connect(shopBtn, &QPushButton::clicked, card, [shopUrl]() { QDesktopServices::openUrl(shopUrl); });
+
+	return card;
+}
+
+// -----------------------------------------------------------------------------
 // Carousel: auto-rotating stack of cards
 // -----------------------------------------------------------------------------
 
-QWidget *fly_create_widget_carousel(QWidget *parent)
+QWidget *create_widget_carousel(QWidget *parent)
 {
-	// Wrapper widget that you add to the dock
 	auto *wrapper = new QWidget(parent);
 	wrapper->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
@@ -202,17 +308,16 @@ QWidget *fly_create_widget_carousel(QWidget *parent)
 	root->setContentsMargins(0, 0, 0, 0);
 	root->setSpacing(4);
 
-	// Stacked widget with the cards
 	auto *stack = new QStackedWidget(wrapper);
 	stack->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
-	stack->addWidget(fly_create_discord_card(stack));
-	stack->addWidget(fly_create_custom_overlay_card(stack));
-	stack->addWidget(fly_create_kofi_card(stack));
+	stack->addWidget(widget_create_shopping_card(stack));
+	stack->addWidget(widget_create_discord_card(stack));
+	stack->addWidget(widget_create_custom_overlay_card(stack));
+	stack->addWidget(widget_create_kofi_card(stack));
 
 	root->addWidget(stack);
 
-	// Dot indicators row (use buttons so they are clickable)
 	QVector<QToolButton *> dots;
 	auto *dotsRow = new QHBoxLayout();
 	dotsRow->setContentsMargins(0, 0, 0, 0);
@@ -243,12 +348,10 @@ QWidget *fly_create_widget_carousel(QWidget *parent)
 	dotsRow->addStretch(1);
 	root->addLayout(dotsRow);
 
-	// Make sure there is always some graphics effect for animation
 	auto *effect = new QGraphicsOpacityEffect(stack);
 	effect->setOpacity(1.0);
 	stack->setGraphicsEffect(effect);
 
-	// Helper to update dot checked state
 	auto updateDots = [stack, dots]() {
 		const int idx = stack->currentIndex();
 		for (int i = 0; i < dots.size(); ++i) {
@@ -260,24 +363,20 @@ QWidget *fly_create_widget_carousel(QWidget *parent)
 
 	updateDots();
 
-	// Auto-advance timer
 	auto *timer = new QTimer(wrapper);
-	timer->setInterval(10000); // 10 seconds
+	timer->setInterval(30000);
 
-	// Smooth fade transition
 	auto switchToIndex = [stack, effect, updateDots, wrapper](int targetIndex) {
 		if (targetIndex < 0 || targetIndex >= stack->count())
 			return;
 		if (targetIndex == stack->currentIndex())
 			return;
 
-		// Fade-out animation
 		auto *fadeOut = new QPropertyAnimation(effect, "opacity", wrapper);
 		fadeOut->setDuration(180);
 		fadeOut->setStartValue(1.0);
 		fadeOut->setEndValue(0.0);
 
-		// Fade-in animation
 		auto *fadeIn = new QPropertyAnimation(effect, "opacity", wrapper);
 		fadeIn->setDuration(180);
 		fadeIn->setStartValue(0.0);
@@ -287,17 +386,14 @@ QWidget *fly_create_widget_carousel(QWidget *parent)
 		group->addAnimation(fadeOut);
 		group->addAnimation(fadeIn);
 
-		// When fade-out ends, swap the page, then fade back in
 		QObject::connect(fadeOut, &QPropertyAnimation::finished, stack, [stack, targetIndex, updateDots]() {
 			stack->setCurrentIndex(targetIndex);
 			updateDots();
 		});
 
-		// Start and auto-delete when done
 		group->start(QAbstractAnimation::DeleteWhenStopped);
 	};
 
-	// Connect dots to direct navigation
 	for (int i = 0; i < dots.size(); ++i) {
 		auto *dot = dots[i];
 		if (!dot)
@@ -305,12 +401,11 @@ QWidget *fly_create_widget_carousel(QWidget *parent)
 
 		QObject::connect(dot, &QToolButton::clicked, wrapper, [i, timer, switchToIndex]() {
 			if (timer)
-				timer->start(); // reset auto-rotate
+				timer->start();
 			switchToIndex(i);
 		});
 	}
 
-	// Auto-advance handler
 	QObject::connect(timer, &QTimer::timeout, wrapper, [stack, switchToIndex]() {
 		if (stack->count() == 0)
 			return;

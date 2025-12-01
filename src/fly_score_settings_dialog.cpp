@@ -4,7 +4,7 @@
 #include "fly_score_log.hpp"
 
 #include "fly_score_settings_dialog.hpp"
-#include "fly_score_server.hpp"
+#include "server.hpp"
 #include "fly_score_state.hpp"
 #include "fly_score_paths.hpp"
 
@@ -23,8 +23,6 @@
 #include <QFileDialog>
 #include <QLineEdit>
 #include <QGroupBox>
-
-#include "httplib.h"
 
 static void styleDot(QLabel *dot, bool ok)
 {
@@ -151,7 +149,7 @@ FlySettingsDialog::FlySettingsDialog(QWidget *parent) : QDialog(parent)
 	portSpin_ = new QSpinBox(portRow);
 	portSpin_->setRange(1024, 65535);
 	{
-		int p = fly_server_port();
+		int p = server_port();
 		if (p <= 0)
 			p = 8089;
 		portSpin_->setValue(p);
@@ -208,29 +206,12 @@ FlySettingsDialog::FlySettingsDialog(QWidget *parent) : QDialog(parent)
 	connect(restartBtn_, &QPushButton::clicked, this, &FlySettingsDialog::onRestartServer);
 	connect(closeBtn, &QPushButton::clicked, this, &FlySettingsDialog::accept);
 
-	const int p = fly_server_port();
-	const bool ok = healthOkHttp(p);
+	const int p = server_port();
+	const bool ok = server_is_running();
 	setStatusUi(ok, p);
 }
 
 FlySettingsDialog::~FlySettingsDialog() {}
-
-bool FlySettingsDialog::healthOkHttp(int port, int timeout_ms)
-{
-	if (port <= 0)
-		return false;
-
-	httplib::Client cli("127.0.0.1", port);
-	cli.set_keep_alive(false);
-	cli.set_connection_timeout(0, timeout_ms * 1000);
-	cli.set_read_timeout(0, timeout_ms * 1000);
-	cli.set_write_timeout(0, timeout_ms * 1000);
-
-	if (auto res = cli.Get("/__ow/health"))
-		return res->status == 200;
-
-	return false;
-}
 
 void FlySettingsDialog::setStatusUi(bool ok, int port)
 {
@@ -244,8 +225,8 @@ void FlySettingsDialog::setStatusUi(bool ok, int port)
 
 void FlySettingsDialog::onPollHealth()
 {
-	const int p = fly_server_port();
-	const bool ok = fly_server_is_running() || healthOkHttp(p);
+	const int p = server_port();
+	const bool ok = server_is_running();
 	setStatusUi(ok, p);
 }
 
@@ -253,6 +234,7 @@ void FlySettingsDialog::onRestartServer()
 {
 	int desiredPort = portSpin_ ? portSpin_->value() : 8089;
 
+	// Overlay root comes from settings
 	QString docRoot = fly_get_data_root_no_ui();
 	if (docRoot.isEmpty())
 		docRoot = fly_get_data_root(this);
@@ -265,10 +247,10 @@ void FlySettingsDialog::onRestartServer()
 		fly_state_ensure_json_exists(docRoot, nullptr);
 	}
 
-	if (fly_server_port() > 0)
-		fly_server_stop();
+	if (server_port() > 0)
+		server_stop();
 
-	int bound = fly_server_start(docRoot, desiredPort);
+	int bound = server_start(docRoot, desiredPort);
 	if (!bound) {
 		LOGW("Could not bind any port near %d", desiredPort);
 	} else if (bound != desiredPort) {
@@ -277,8 +259,9 @@ void FlySettingsDialog::onRestartServer()
 			portSpin_->setValue(bound);
 	}
 
-	const int p = fly_server_port();
-	setStatusUi(healthOkHttp(p), p);
+	const int p = server_port();
+	const bool ok = server_is_running();
+	setStatusUi(ok, p);
 }
 
 void FlySettingsDialog::onOpenOverlayFolder()
@@ -298,9 +281,7 @@ void FlySettingsDialog::onBrowseDocRoot()
 		current = fly_default_data_root();
 
 	QString picked = QFileDialog::getExistingDirectory(
-		this,
-		tr("Select Fly Scoreboard document root (contains plugin.json and overlay files)"),
-		current);
+		this, tr("Select Fly Scoreboard document root (contains plugin.json and overlay files)"), current);
 
 	if (picked.isEmpty())
 		return;

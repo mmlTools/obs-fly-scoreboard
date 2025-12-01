@@ -1,5 +1,3 @@
-// src/fly_score_plugin.cpp
-
 #include "config.hpp"
 
 #define LOG_TAG "[" PLUGIN_NAME "][plugin]"
@@ -12,7 +10,7 @@
 #include <QDir>
 
 #include "fly_score_paths.hpp"
-#include "fly_score_server.hpp"
+#include "server.hpp"
 #include "fly_score_state.hpp"
 #include "fly_score_dock.hpp"
 #include "fly_score_const.hpp"
@@ -36,7 +34,7 @@ bool obs_module_load(void)
 
 	const QString docRoot = fly_get_data_root(nullptr);
 
-	int port = fly_server_start(docRoot, 8089);
+	int port = server_start(docRoot, 8089);
 	if (port == 0)
 		LOGW("Web server failed to bind");
 	else
@@ -52,7 +50,7 @@ void obs_module_unload(void)
 	LOGI("Plugin unloading...");
 
 	fly_destroy_dock();
-	fly_server_stop();
+	server_stop();
 
 	LOGI("Plugin unloaded");
 }
